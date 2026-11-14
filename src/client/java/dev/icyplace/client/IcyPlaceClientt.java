@@ -24,7 +24,7 @@ public class IcyPlaceClient implements ClientModInitializer {
                     new KeyMapping(
                             "key.icyplace.toggle",
                             InputConstants.Type.KEYSYM,
-                            GLFW.GLFW_KEY_F8,
+                            GLFW.GLFW_KEY_F10,
                             CATEGORY
                     )
             );
