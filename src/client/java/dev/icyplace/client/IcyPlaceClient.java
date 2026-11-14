@@ -110,7 +110,7 @@ public class IcyPlaceClient implements ClientModInitializer {
 
             String status;
             if (matchingSlot >= 0) {
-                client.player.getInventory().selected = matchingSlot;
+                client.player.getInventory().setSelectedSlot(matchingSlot);
                 status = "Need " + blockName + " — selected hotbar slot " + (matchingSlot + 1);
             } else {
                 status = "Need " + blockName + " — NOT IN HOTBAR";
@@ -123,6 +123,6 @@ public class IcyPlaceClient implements ClientModInitializer {
     }
 
     private static void message(net.minecraft.client.Minecraft client, String text) {
-        if (client.player != null) client.player.displayClientMessage(Component.literal("IcyPlace: " + text), true);
+        if (client.player != null) client.player.sendSystemMessage(Component.literal("IcyPlace: " + text));
     }
 }
