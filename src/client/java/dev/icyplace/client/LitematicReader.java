@@ -22,16 +22,12 @@ final class LitematicReader {
         String blockAt(int x, int y, int z) {
             if (x < 0 || y < 0 || z < 0 || x >= sizeX || y >= sizeY || z >= sizeZ) return null;
             int bits = Math.max(2, 32 - Integer.numberOfLeadingZeros(palette.size() - 1));
-            long bitIndex = ((long) y * sizeZ * sizeX + (long) z * sizeX + x) * bits;
-            int word = (int) (bitIndex >>> 6);
-            int offset = (int) (bitIndex & 63);
+            long blockIndex = (long) y * sizeZ * sizeX + (long) z * sizeX + x;
+            int valuesPerLong = 64 / bits;
+            int word = (int) (blockIndex / valuesPerLong);
+            int offset = (int) ((blockIndex % valuesPerLong) * bits);
             if (word >= states.length) return null;
-            long value = states[word] >>> offset;
-            if (offset + bits > 64) {
-                if (word + 1 >= states.length) return null;
-                value |= states[word + 1] << (64 - offset);
-            }
-            int paletteIndex = (int) (value & ((1L << bits) - 1));
+            int paletteIndex = (int) ((states[word] >>> offset) & ((1L << bits) - 1));
             return paletteIndex >= 0 && paletteIndex < palette.size() ? palette.get(paletteIndex) : null;
         }
     }
