@@ -1,4 +1,3 @@
-
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
     id 'maven-publish'
@@ -12,6 +11,12 @@ base {
 }
 
 repositories {
+    maven {
+        url = "https://masa.dy.fi/maven/sakura-ryoko"
+        content {
+            includeGroupAndSubgroups("fi.dy.masa")
+        }
+    }
 }
 
 loom {
@@ -29,6 +34,10 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Compile against the exact Litematica and MaLiLib APIs for Minecraft 26.2.
+    modCompileOnly "fi.dy.masa.litematica:litematica-fabric-26.2:0.28.8"
+    modCompileOnly "fi.dy.masa.malilib:malilib-fabric-26.2:0.29.6"
 }
 
 processResources {
