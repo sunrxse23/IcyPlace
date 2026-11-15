@@ -30,6 +30,9 @@ public class IcyPlaceClient implements ClientModInitializer {
             new KeyMapping("key.icyplace.load", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F12, CATEGORY));
     private static final KeyMapping ORIGIN_KEY = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.icyplace.origin", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, CATEGORY));
+    private static final KeyMapping ROTATE_KEY = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.icyplace.rotate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F7, CATEGORY));
+    private static int rotation = 0;
 
     @Override
     public void onInitializeClient() {
@@ -51,6 +54,11 @@ public class IcyPlaceClient implements ClientModInitializer {
                                 + "). Aim at the schematic's bottom corner and press F8.");
                     }));
                 }
+            }
+
+            while (ROTATE_KEY.consumeClick()) {
+                rotation = (rotation + 1) & 3;
+                message(client, "Schematic rotated " + (rotation * 90) + " degrees.");
             }
 
             while (ORIGIN_KEY.consumeClick()) {
@@ -111,6 +119,13 @@ public class IcyPlaceClient implements ClientModInitializer {
             }
         });
     }
+
+    static LitematicReader.Schematic getSchematic() { return schematic; }
+    static boolean isOriginSet() { return originSet; }
+    static int getOriginX() { return originX; }
+    static int getOriginY() { return originY; }
+    static int getOriginZ() { return originZ; }
+    static int getRotation() { return rotation; }
 
     private static void message(net.minecraft.client.Minecraft client, String text) {
         if (client.player != null) client.player.sendSystemMessage(Component.literal("IcyPlace: " + text));
