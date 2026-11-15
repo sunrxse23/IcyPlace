@@ -3,15 +3,10 @@
   "id": "icyplace",
   "version": "${version}",
   "name": "IcyPlace",
-  "description": "A client-side schematic block selection assistant.",
-  "authors": [
-    "IcyPlace"
-  ],
-  "environment": "*",
+  "description": "Automatically selects the block targeted in the active Litematica schematic.",
+  "authors": ["IcyPlace"],
+  "environment": "client",
   "entrypoints": {
-    "main": [
-      "dev.icyplace.IcyPlace"
-    ],
     "client": [
       "dev.icyplace.client.IcyPlaceClient"
     ]
@@ -20,6 +15,8 @@
     "fabricloader": ">=0.19.3",
     "minecraft": "~26.2",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "litematica": ">=0.28.8",
+    "malilib": ">=0.29.6"
   }
 }
