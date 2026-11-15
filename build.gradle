@@ -35,9 +35,9 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // Compile against the exact Litematica and MaLiLib APIs for Minecraft 26.2.
-    modCompileOnly "fi.dy.masa.litematica:litematica-fabric-26.2:0.28.8"
-    modCompileOnly "fi.dy.masa.malilib:malilib-fabric-26.2:0.29.6"
+    // Compile against Litematica and MaLiLib for Minecraft 26.2.
+    modImplementation "fi.dy.masa.litematica:litematica-fabric-26.2:0.28.8"
+    modImplementation "fi.dy.masa.malilib:malilib-fabric-26.2:0.29.6"
 }
 
 processResources {
