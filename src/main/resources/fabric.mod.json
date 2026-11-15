@@ -3,7 +3,7 @@
   "id": "icyplace",
   "version": "${version}",
   "name": "IcyPlace",
-  "description": "A client-side Minecraft placement assistant.",
+  "description": "A client-side schematic block selection assistant.",
   "authors": [
     "IcyPlace"
   ],
@@ -13,8 +13,7 @@
       "dev.icyplace.IcyPlace"
     ],
     "client": [
-      "dev.icyplace.client.IcyPlaceClient",
-      "dev.icyplace.client.SchematicHologramRenderer"
+      "dev.icyplace.client.IcyPlaceClient"
     ]
   },
   "depends": {
