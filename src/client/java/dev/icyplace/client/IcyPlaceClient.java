@@ -11,12 +11,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 import org.lwjgl.glfw.GLFW;
 
-public class IcyPlaceClient implements ClientModInitializer {
+public class IcyPlaceClient {
     private static boolean enabled = true;
     private static String lastMissingBlock = "";
 
@@ -24,6 +26,8 @@ public class IcyPlaceClient implements ClientModInitializer {
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("icyplace", "main"));
     private static final KeyMapping TOGGLE_KEY = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.icyplace.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F10, CATEGORY));
+    private static final KeyMapping AUTOPLACE_KEY = KeyMappingHelper.registerKeyMapping(
+            new KeyMapping("key.icyplace.autoplace", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
 
     @Override
     public void onInitializeClient() {
@@ -89,6 +93,14 @@ public class IcyPlaceClient implements ClientModInitializer {
                 }
 
                 lastMissingBlock = "";
+
+                // One deliberate right-click action per G press; never auto-repeat.
+                if (AUTOPLACE_KEY.consumeClick()
+                        && client.player.getMainHandItem().getItem() instanceof BlockItem heldBlock
+                        && heldBlock.getBlock() == requiredBlock
+                        && client.hitResult instanceof BlockHitResult blockHit) {
+                    client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, blockHit);
+                }
             } else if (!blockName.equals(lastMissingBlock)) {
                 message(client, "Missing from inventory: " + blockName);
                 lastMissingBlock = blockName;
