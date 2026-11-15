@@ -1,6 +1,8 @@
 {
-  "key.category.icyplace.main": "IcyPlace",
-  "key.icyplace.toggle": "Toggle IcyPlace",
+  "key.categories.icyplace.main": "IcyPlace",
+  "key.icyplace.toggle": "Toggle IcyPlace Assistant",
+  "key.icyplace.autoplace": "Toggle AutoPlace",
+  "key.icyplace.speed": "Change AutoPlace Speed",
   "key.icyplace.load": "Load Litematica schematic",
   "key.icyplace.origin": "Set schematic origin"
 }
