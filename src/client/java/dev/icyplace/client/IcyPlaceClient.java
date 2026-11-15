@@ -20,6 +20,8 @@ import org.lwjgl.glfw.GLFW;
 
 public class IcyPlaceClient implements ClientModInitializer {
     private static boolean enabled = true;
+    private static boolean autoPlaceEnabled = false;
+    private static int autoPlaceCooldown = 0;
     private static String lastMissingBlock = "";
 
     private static final KeyMapping.Category CATEGORY =
@@ -34,11 +36,25 @@ public class IcyPlaceClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (TOGGLE_KEY.consumeClick()) {
                 enabled = !enabled;
+                if (!enabled) {
+                    autoPlaceEnabled = false;
+                }
                 lastMissingBlock = "";
                 message(client, "Assistant " + (enabled ? "ON" : "OFF"));
+                if (!enabled) {
+                    message(client, "AutoPlace OFF");
+                }
             }
 
-            boolean autoPlacePressed = AUTOPLACE_KEY.consumeClick();
+            while (AUTOPLACE_KEY.consumeClick()) {
+                if (enabled) {
+                    autoPlaceEnabled = !autoPlaceEnabled;
+                    autoPlaceCooldown = 0;
+                    message(client, "AutoPlace " + (autoPlaceEnabled ? "ON" : "OFF"));
+                } else {
+                    message(client, "Turn the assistant on first (F10)");
+                }
+            }
 
             if (!enabled || client.player == null || client.level == null || client.gui.screen() != null
                     || client.gameMode == null) {
@@ -96,12 +112,17 @@ public class IcyPlaceClient implements ClientModInitializer {
 
                 lastMissingBlock = "";
 
-                // One deliberate right-click action per G press; never auto-repeat.
-                if (autoPlacePressed
+                // While toggled on, make a normal right-click placement attempt every 4 ticks.
+                if (autoPlaceEnabled
                         && client.player.getMainHandItem().getItem() instanceof BlockItem heldBlock
                         && heldBlock.getBlock() == requiredBlock
                         && client.hitResult instanceof BlockHitResult blockHit) {
-                    client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, blockHit);
+                    if (autoPlaceCooldown <= 0) {
+                        client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, blockHit);
+                        autoPlaceCooldown = 4;
+                    } else {
+                        autoPlaceCooldown--;
+                    }
                 }
             } else if (!blockName.equals(lastMissingBlock)) {
                 message(client, "Missing from inventory: " + blockName);
