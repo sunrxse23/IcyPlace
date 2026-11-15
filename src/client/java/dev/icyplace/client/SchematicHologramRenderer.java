@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
-final class SchematicHologramRenderer implements ClientModInitializer {
+public final class SchematicHologramRenderer implements ClientModInitializer {
+    public SchematicHologramRenderer() {
+    }
     private static final RenderPipeline PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath("icyplace", "pipeline/schematic_hologram"))
