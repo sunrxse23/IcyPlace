@@ -14,10 +14,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.lwjgl.glfw.GLFW;
 
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.io.File;
-import java.nio.file.Path;
 
 public class IcyPlaceClient implements ClientModInitializer {
     private static boolean enabled = false;
@@ -45,22 +41,16 @@ public class IcyPlaceClient implements ClientModInitializer {
             }
 
             while (LOAD_KEY.consumeClick()) {
-                FileDialog dialog = new FileDialog((Frame) null, "Select a Litematica schematic", FileDialog.LOAD);
-                dialog.setFile("*.litematic");
-                dialog.setVisible(true);
-                if (dialog.getFile() != null) {
-                    try {
-                        schematic = LitematicReader.load(Path.of(dialog.getDirectory(), dialog.getFile()));
+                if (client.player != null) {
+                    client.gui.setScreen(new SchematicPickerScreen(client, client.gui.screen(), loaded -> {
+                        schematic = loaded;
                         originSet = false;
+                        lastTarget = "";
                         message(client, "Loaded schematic (" + schematic.sizeX() + "x"
                                 + schematic.sizeY() + "x" + schematic.sizeZ()
                                 + "). Aim at the schematic's bottom corner and press F8.");
-                    } catch (Exception exception) {
-                        schematic = null;
-                        message(client, "Could not load schematic: " + exception.getMessage());
-                    }
+                    }));
                 }
-                dialog.dispose();
             }
 
             while (ORIGIN_KEY.consumeClick()) {
