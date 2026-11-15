@@ -1,6 +1,19 @@
 package dev.icyplace.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.fabricmc.loader.api.FabricLoader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import net.fabricmc.api.ClientModInitializer;
@@ -23,6 +36,12 @@ public class IcyPlaceClient implements ClientModInitializer {
     private static boolean autoPlaceEnabled = false;
     private static int autoPlaceCooldown = 0;
     private static String lastMissingBlock = "";
+    private static boolean updateCheckStarted = false;
+    private static final ConcurrentLinkedQueue<String> UPDATE_MESSAGES = new ConcurrentLinkedQueue<>();
+    private static final HttpClient HTTP = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build();
 
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("icyplace", "main"));
@@ -34,6 +53,14 @@ public class IcyPlaceClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!updateCheckStarted) {
+                updateCheckStarted = true;
+                CompletableFuture.runAsync(IcyPlaceClient::checkForUpdates);
+            }
+            String updateMessage;
+            while ((updateMessage = UPDATE_MESSAGES.poll()) != null) {
+                message(client, updateMessage);
+            }
             while (TOGGLE_KEY.consumeClick()) {
                 enabled = !enabled;
                 lastMissingBlock = "";
@@ -124,6 +151,53 @@ public class IcyPlaceClient implements ClientModInitializer {
         });
     }
 
+    private static void checkForUpdates() {
+        try {
+            HttpRequest releaseRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.github.com/repos/sunrxse23/IcyPlace/releases/latest"))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("Accept", "application/vnd.github+json")
+                    .header("User-Agent", "IcyPlace-Updater")
+                    .GET()
+                    .build();
+            HttpResponse<String> releaseResponse = HTTP.send(releaseRequest, HttpResponse.BodyHandlers.ofString());
+            if (releaseResponse.statusCode() != 200) return;
+            JsonObject release = JsonParser.parseString(releaseResponse.body()).getAsJsonObject();
+            String tag = release.get("tag_name").getAsString();
+            String latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
+            String installedVersion = FabricLoader.getInstance().getModContainer("icyplace")
+                    .map(container -> container.getMetadata().getVersion().getFriendlyString()).orElse("0");
+            if (latestVersion.equals(installedVersion)) return;
+            JsonArray assets = release.getAsJsonArray("assets");
+            if (assets == null) return;
+            String downloadUrl = null;
+            String assetName = null;
+            for (int i = 0; i < assets.size(); i++) {
+                JsonObject asset = assets.get(i).getAsJsonObject();
+                String name = asset.get("name").getAsString();
+                if (name.startsWith("icyplace-" + latestVersion) && name.endsWith(".jar") && !name.endsWith("-sources.jar")) {
+                    assetName = name;
+                    downloadUrl = asset.get("browser_download_url").getAsString();
+                    break;
+                }
+            }
+            if (downloadUrl == null) return;
+            Path updateDirectory = FabricLoader.getInstance().getGameDir().resolve("config").resolve("icyplace").resolve("updates");
+            Files.createDirectories(updateDirectory);
+            Path updateFile = updateDirectory.resolve(assetName);
+            if (Files.exists(updateFile)) return;
+            HttpRequest downloadRequest = HttpRequest.newBuilder().uri(URI.create(downloadUrl))
+                    .timeout(Duration.ofMinutes(2)).header("User-Agent", "IcyPlace-Updater").GET().build();
+            HttpResponse<byte[]> downloadResponse = HTTP.send(downloadRequest, HttpResponse.BodyHandlers.ofByteArray());
+            if (downloadResponse.statusCode() == 200 && downloadResponse.body().length > 0) {
+                Files.write(updateFile, downloadResponse.body());
+                UPDATE_MESSAGES.add("Update " + latestVersion + " downloaded. Close Minecraft, then replace the IcyPlace JAR in mods with "
+                        + assetName + " from config/icyplace/updates.");
+            }
+        } catch (Exception ignored) {
+            // Network or GitHub errors must never prevent Minecraft from starting.
+        }
+    }
     private static void message(net.minecraft.client.Minecraft client, String text) {
         if (client.player != null) {
             client.player.sendSystemMessage(Component.literal("IcyPlace: " + text));
