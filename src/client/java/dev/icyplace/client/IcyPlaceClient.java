@@ -36,32 +36,22 @@ public class IcyPlaceClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (TOGGLE_KEY.consumeClick()) {
                 enabled = !enabled;
-                if (!enabled) {
-                    autoPlaceEnabled = false;
-                }
                 lastMissingBlock = "";
                 message(client, "Assistant " + (enabled ? "ON" : "OFF"));
-                if (!enabled) {
-                    message(client, "AutoPlace OFF");
-                }
             }
 
             while (AUTOPLACE_KEY.consumeClick()) {
-                if (enabled) {
-                    autoPlaceEnabled = !autoPlaceEnabled;
-                    autoPlaceCooldown = 0;
-                    message(client, "AutoPlace " + (autoPlaceEnabled ? "ON" : "OFF"));
-                } else {
-                    message(client, "Turn the assistant on first (F10)");
-                }
+                autoPlaceEnabled = !autoPlaceEnabled;
+                autoPlaceCooldown = 0;
+                message(client, "AutoPlace " + (autoPlaceEnabled ? "ON" : "OFF"));
             }
 
-            if (!enabled || client.player == null || client.level == null || client.gui.screen() != null
+            if (client.player == null || client.level == null || client.gui.screen() != null
                     || client.gameMode == null) {
                 return;
             }
 
-            // Use Litematica's own ray trace against its actual loaded schematic world.
+            // Read the block at the active Litematica schematic target.
             BlockPos targetPos = RayTraceUtils.getSchematicWorldTraceIfClosest(
                     client.level, client.player, 6.0);
 
@@ -82,51 +72,54 @@ public class IcyPlaceClient implements ClientModInitializer {
                 return;
             }
 
-            String blockName = BuiltInRegistries.BLOCK.getKey(requiredBlock).toString();
-            int matchingSlot = -1;
+            // F10 controls only automatic block selection and missing-block warnings.
+            if (enabled) {
+                String blockName = BuiltInRegistries.BLOCK.getKey(requiredBlock).toString();
+                int matchingSlot = -1;
 
-            // Search all 36 normal inventory slots, not only the hotbar.
-            for (int slot = 0; slot < 36; slot++) {
-                ItemStack stack = client.player.getInventory().getItem(slot);
-                if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem
-                        && blockItem.getBlock() == requiredBlock) {
-                    matchingSlot = slot;
-                    break;
+                // Search all 36 normal inventory slots, not only the hotbar.
+                for (int slot = 0; slot < 36; slot++) {
+                    ItemStack stack = client.player.getInventory().getItem(slot);
+                    if (!stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem
+                            && blockItem.getBlock() == requiredBlock) {
+                        matchingSlot = slot;
+                        break;
+                    }
+                }
+
+                if (matchingSlot >= 0) {
+                    int hotbarSlot = client.player.getInventory().getSelectedSlot();
+
+                    if (matchingSlot >= 9) {
+                        client.gameMode.handleContainerInput(
+                                client.player.inventoryMenu.containerId,
+                                matchingSlot,
+                                hotbarSlot,
+                                ContainerInput.SWAP,
+                                client.player);
+                    } else {
+                        client.player.getInventory().setSelectedSlot(matchingSlot);
+                    }
+
+                    lastMissingBlock = "";
+                } else if (!blockName.equals(lastMissingBlock)) {
+                    message(client, "Missing from inventory: " + blockName);
+                    lastMissingBlock = blockName;
                 }
             }
 
-            if (matchingSlot >= 0) {
-                int hotbarSlot = client.player.getInventory().getSelectedSlot();
-
-                if (matchingSlot >= 9) {
-                    // Server-synced swap from main inventory into the selected hotbar slot.
-                    client.gameMode.handleContainerInput(
-                            client.player.inventoryMenu.containerId,
-                            matchingSlot,
-                            hotbarSlot,
-                            ContainerInput.SWAP,
-                            client.player);
+            // G controls AutoPlace independently. With F10 off, the required block
+            // must already be in the player's hand.
+            if (autoPlaceEnabled
+                    && client.player.getMainHandItem().getItem() instanceof BlockItem heldBlock
+                    && heldBlock.getBlock() == requiredBlock
+                    && client.hitResult instanceof BlockHitResult blockHit) {
+                if (autoPlaceCooldown <= 0) {
+                    client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, blockHit);
+                    autoPlaceCooldown = 4;
                 } else {
-                    client.player.getInventory().setSelectedSlot(matchingSlot);
+                    autoPlaceCooldown--;
                 }
-
-                lastMissingBlock = "";
-
-                // While toggled on, make a normal right-click placement attempt every 4 ticks.
-                if (autoPlaceEnabled
-                        && client.player.getMainHandItem().getItem() instanceof BlockItem heldBlock
-                        && heldBlock.getBlock() == requiredBlock
-                        && client.hitResult instanceof BlockHitResult blockHit) {
-                    if (autoPlaceCooldown <= 0) {
-                        client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, blockHit);
-                        autoPlaceCooldown = 4;
-                    } else {
-                        autoPlaceCooldown--;
-                    }
-                }
-            } else if (!blockName.equals(lastMissingBlock)) {
-                message(client, "Missing from inventory: " + blockName);
-                lastMissingBlock = blockName;
             }
         });
     }
