@@ -18,7 +18,6 @@ import java.util.zip.ZipFile;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Stream;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import net.fabricmc.api.ClientModInitializer;
@@ -244,6 +243,8 @@ public class IcyPlaceClient implements ClientModInitializer {
             pendingUpdateFile = updateFile;
             pendingUpdateName = assetName;
             registerAutomaticInstall();
+            UPDATE_MESSAGES.add("Update " + latestVersion
+                    + " downloaded. It will install automatically when you close Minecraft.");
         } catch (Exception ignored) {
             // Network or GitHub errors must never prevent Minecraft from starting.
         }
