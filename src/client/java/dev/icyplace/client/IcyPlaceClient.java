@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
@@ -34,7 +34,7 @@ public class IcyPlaceClient implements ClientModInitializer {
                 message(client, "Assistant " + (enabled ? "ON" : "OFF"));
             }
 
-            if (!enabled || client.player == null || client.level == null || client.screen != null
+            if (!enabled || client.player == null || client.level == null || client.gui.screen() != null
                     || client.gameMode == null) {
                 return;
             }
@@ -78,11 +78,11 @@ public class IcyPlaceClient implements ClientModInitializer {
 
                 if (matchingSlot >= 9) {
                     // Server-synced swap from main inventory into the selected hotbar slot.
-                    client.gameMode.handleInventoryMouseClick(
+                    client.gameMode.handleContainerInput(
                             client.player.inventoryMenu.containerId,
                             matchingSlot,
                             hotbarSlot,
-                            ClickType.SWAP,
+                            ContainerInput.SWAP,
                             client.player);
                 } else {
                     client.player.getInventory().setSelectedSlot(matchingSlot);
