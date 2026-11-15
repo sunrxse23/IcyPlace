@@ -7,6 +7,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,12 +30,24 @@ jobs:
           gradle-version: '9.6.0'
 
       - name: Build mod
-        run: gradle build --no-daemon
+        run: gradle build --no-daemon -Pmod_version=1.0.${{ github.run_number }}
 
       - name: Upload build artifacts
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: IcyPlace-build
-          path: build/libs/*.jar
+          path: |
+            build/libs/icyplace-1.0.${{ github.run_number }}.jar
+            !build/libs/*-sources.jar
           if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: IcyPlace 1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          files: build/libs/icyplace-1.0.${{ github.run_number }}.jar
+          generate_release_notes: true
