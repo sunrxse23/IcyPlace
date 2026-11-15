@@ -52,13 +52,13 @@ public class IcyPlaceClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (TOGGLE_KEY.consumeClick()) {
                 enabled = !enabled;
-                notifyOverlay("Assistant " + (enabled ? "ON" : "OFF"));
+                notifyOverlay("IcyPlace " + (enabled ? "Activated" : "Deactivated"));
             }
 
             while (AUTOPLACE_KEY.consumeClick()) {
                 autoPlaceEnabled = !autoPlaceEnabled;
                 autoPlaceCooldown = 0;
-                notifyOverlay("AutoPlace " + (autoPlaceEnabled ? "ON" : "OFF"));
+                notifyOverlay("AutoPlace " + (autoPlaceEnabled ? "Activated" : "Deactivated"));
             }
 
             while (SPEED_KEY.consumeClick()) {
@@ -145,28 +145,19 @@ public class IcyPlaceClient implements ClientModInitializer {
 
     private static void renderOverlay(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.gui.screen() != null) {
+        if (client.player == null || client.gui.screen() != null
+                || notification.isEmpty() || System.currentTimeMillis() >= notificationUntil) {
             return;
         }
 
+        int width = client.font.width(notification) + 18;
+        int height = 22;
         int x = 8;
-        int y = 8;
-        int width = 154;
-        int height = 34;
+        int y = graphics.guiHeight() - height - 8;
 
-        graphics.fill(x, y, x + width, y + height, 0xB9000000);
+        // A temporary toast only: bottom-left, hidden unless a keybind was just used.
+        graphics.fill(x, y, x + width, y + height, 0xD9000000);
         graphics.outline(x, y, width, height, 0x6655FFFF);
-        graphics.text(client.font, "IcyPlace  " + (enabled ? "ON" : "OFF"),
-                x + 7, y + 5, enabled ? 0xFF75F0A0 : 0xFFFF7777, true);
-        graphics.text(client.font, "AutoPlace  " + (autoPlaceEnabled ? "ON" : "OFF")
-                        + "   H: " + autoPlaceIntervalTicks + "t",
-                x + 7, y + 19, autoPlaceEnabled ? 0xFF75F0A0 : 0xFFCCCCCC, true);
-
-        if (!notification.isEmpty() && System.currentTimeMillis() < notificationUntil) {
-            int toastY = y + height + 5;
-            int toastWidth = Math.min(260, client.font.width(notification) + 14);
-            graphics.fill(x, toastY, x + toastWidth, toastY + 18, 0xD9000000);
-            graphics.text(client.font, notification, x + 7, toastY + 5, 0xFFFFFFFF, true);
-        }
+        graphics.text(client.font, notification, x + 9, y + 7, 0xFFFFFFFF, true);
     }
 }
