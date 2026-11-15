@@ -20,7 +20,7 @@ public class IcyPlaceClient implements ClientModInitializer {
     private static LitematicReader.Schematic schematic;
     private static int originX, originY, originZ;
     private static boolean originSet = false;
-    private static String lastTarget = "";
+    private static String lastMissingBlock = "";
     private static int rotation = 0;
 
     private static final KeyMapping.Category CATEGORY =
@@ -39,7 +39,7 @@ public class IcyPlaceClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (TOGGLE_KEY.consumeClick()) {
                 enabled = !enabled;
-                lastTarget = "";
+                lastMissingBlock = "";
                 message(client, "Assistant " + (enabled ? "ON" : "OFF"));
             }
 
@@ -48,7 +48,7 @@ public class IcyPlaceClient implements ClientModInitializer {
                     client.gui.setScreen(new SchematicPickerScreen(client, client.gui.screen(), loaded -> {
                         schematic = loaded;
                         originSet = false;
-                        lastTarget = "";
+                        lastMissingBlock = "";
                         message(client, "Loaded " + schematic.sizeX() + "x" + schematic.sizeY()
                                 + "x" + schematic.sizeZ()
                                 + ". Put Litematica's hologram in place, aim at its bottom corner, then press F8.");
@@ -58,7 +58,7 @@ public class IcyPlaceClient implements ClientModInitializer {
 
             while (ROTATE_KEY.consumeClick()) {
                 rotation = (rotation + 1) & 3;
-                lastTarget = "";
+                lastMissingBlock = "";
                 message(client, "Rotation set to " + (rotation * 90)
                         + " degrees. Match this to Litematica's schematic rotation.");
             }
@@ -73,7 +73,7 @@ public class IcyPlaceClient implements ClientModInitializer {
                     originY = pos.getY();
                     originZ = pos.getZ();
                     originSet = true;
-                    lastTarget = "";
+                    lastMissingBlock = "";
                     message(client, "Anchor set at " + originX + ", " + originY + ", " + originZ
                             + ". This must match the bottom corner of Litematica's hologram.");
                 } else {
@@ -86,7 +86,7 @@ public class IcyPlaceClient implements ClientModInitializer {
             String blockName = findSchematicBlockOnLookRay(
                     schematic, client.player.getEyePosition(), client.player.getViewVector(1.0F));
             if (blockName == null) {
-                lastTarget = "";
+                lastMissingBlock = "";
                 return;
             }
 
@@ -103,16 +103,14 @@ public class IcyPlaceClient implements ClientModInitializer {
                 }
             }
 
-            String status;
             if (matchingSlot >= 0) {
+                // Silently select the needed block. Successful selection never sends chat messages.
                 client.player.getInventory().setSelectedSlot(matchingSlot);
-                status = "Looking at " + blockName + " — selected slot " + (matchingSlot + 1);
-            } else {
-                status = "Looking at " + blockName + " — NOT IN HOTBAR";
-            }
-            if (!status.equals(lastTarget)) {
-                message(client, status);
-                lastTarget = status;
+                lastMissingBlock = "";
+            } else if (!blockName.equals(lastMissingBlock)) {
+                // Warn only once when the required missing block changes.
+                message(client, "Missing from hotbar: " + blockName);
+                lastMissingBlock = blockName;
             }
         });
     }
