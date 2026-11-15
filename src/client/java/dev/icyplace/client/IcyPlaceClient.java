@@ -31,7 +31,7 @@ public class IcyPlaceClient implements ClientModInitializer {
     private static final KeyMapping TOGGLE_KEY = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.icyplace.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F10, CATEGORY));
     private static final KeyMapping LOAD_KEY = KeyMappingHelper.registerKeyMapping(
-            new KeyMapping("key.icyplace.load", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F9, CATEGORY));
+            new KeyMapping("key.icyplace.load", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F12, CATEGORY));
     private static final KeyMapping ORIGIN_KEY = KeyMappingHelper.registerKeyMapping(
             new KeyMapping("key.icyplace.origin", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, CATEGORY));
 
@@ -65,7 +65,7 @@ public class IcyPlaceClient implements ClientModInitializer {
 
             while (ORIGIN_KEY.consumeClick()) {
                 if (schematic == null) {
-                    message(client, "Load a .litematic first with F9.");
+                    message(client, "Load a .litematic first with F12.");
                 } else if (client.hitResult instanceof BlockHitResult hit
                         && hit.getType() == HitResult.Type.BLOCK) {
                     var pos = hit.getBlockPos().relative(hit.getDirection());
