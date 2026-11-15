@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import org.lwjgl.glfw.GLFW;
 
-public class IcyPlaceClient {
+public class IcyPlaceClient implements ClientModInitializer {
     private static boolean enabled = true;
     private static String lastMissingBlock = "";
 
@@ -37,6 +37,8 @@ public class IcyPlaceClient {
                 lastMissingBlock = "";
                 message(client, "Assistant " + (enabled ? "ON" : "OFF"));
             }
+
+            boolean autoPlacePressed = AUTOPLACE_KEY.consumeClick();
 
             if (!enabled || client.player == null || client.level == null || client.gui.screen() != null
                     || client.gameMode == null) {
@@ -95,7 +97,7 @@ public class IcyPlaceClient {
                 lastMissingBlock = "";
 
                 // One deliberate right-click action per G press; never auto-repeat.
-                if (AUTOPLACE_KEY.consumeClick()
+                if (autoPlacePressed
                         && client.player.getMainHandItem().getItem() instanceof BlockItem heldBlock
                         && heldBlock.getBlock() == requiredBlock
                         && client.hitResult instanceof BlockHitResult blockHit) {
