@@ -1,18 +1,20 @@
-
 {
   "schemaVersion": 1,
   "id": "icyplace",
   "version": "${version}",
   "name": "IcyPlace",
   "description": "A client-side Minecraft placement assistant.",
-  "authors": ["IcyPlace"],
+  "authors": [
+    "IcyPlace"
+  ],
   "environment": "*",
   "entrypoints": {
     "main": [
       "dev.icyplace.IcyPlace"
     ],
     "client": [
-      "dev.icyplace.client.IcyPlaceClient"
+      "dev.icyplace.client.IcyPlaceClient",
+      "dev.icyplace.client.SchematicHologramRenderer"
     ]
   },
   "depends": {
